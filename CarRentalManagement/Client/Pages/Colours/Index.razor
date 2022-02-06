@@ -1,0 +1,76 @@
+﻿@page "/colours/"
+@inject HttpClient _client
+@inject HttpInterceptorService _interceptor
+@implements IDisposable
+@inject IJSRuntime js
+@attribute [Authorize]
+
+
+<h3 class="card-title">Car colours</h3>
+
+<br />
+<a href="/colours/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Colour
+</a>
+<br />
+<br />
+
+@if (colours == null)
+{
+    <div class="alert alert-info">Loading colours...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var colour in colours)
+            {
+                <tr>
+                    <td>@colour.Name</td>
+                    <td>
+                        <a href="/colours/view/@colour.Id" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                        <a href="/colours/edit/@colour.Id" class="btn btn-warning">
+                            <span class="oi oi-pencil"></span>
+                        </a>
+                        <button class="btn btn-danger" @onclick="@(()=>Delete(colour.Id))">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Colour> colours;
+    protected async override Task OnInitializedAsync()
+    {
+        _interceptor.MonitorEvent();
+        colours = await _client.GetFromJsonAsync<List<Colour>>($"{Endpoints.ColoursEndpoint}");
+    }
+    async Task Delete(int colourId)
+    {
+        var colour = colours.First(q => q.Id == colourId);
+        var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {colour.Name}?");
+        if (confirm)
+        {
+            await _client.DeleteAsync($"{Endpoints.ColoursEndpoint}/{colourId}");
+            await OnInitializedAsync();
+        }
+    }
+    public void Dispose()
+    {
+        _interceptor.DisposeEvent();
+    }
+}

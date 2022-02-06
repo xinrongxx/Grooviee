@@ -1,0 +1,23 @@
+﻿@page "/drivers/edit/{id:int}"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+
+<h3>Edit Driver</h3>
+<FormComponent ButtonText="Update" OnValidSubmit="EditDriver" driver="driver" />
+
+@code {
+    [Parameter] public int id { get; set; }
+    Driver driver = new Driver();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        driver = await _client.GetFromJsonAsync<Driver>($"{Endpoints.DriversEndpoint}/{id}");
+    }
+
+    async Task EditDriver()
+    {
+        await _client.PutAsJsonAsync($"{Endpoints.DriversEndpoint}/{id}", driver);
+        _navManager.NavigateTo("/drivers/");
+    }
+
+}

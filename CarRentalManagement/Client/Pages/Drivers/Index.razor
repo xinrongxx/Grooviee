@@ -1,0 +1,76 @@
+﻿@page "/drivers/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+
+
+<h3 class="card-title">Car Drivers</h3>
+
+<br />
+<a href="/drivers/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Driver
+</a>
+<br />
+<br />
+@if (Drivers == null)
+{
+    <div class="alert alert-info">Loading Drivers...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Driving License</th>
+                <th>Contact Number</th>
+                <th>Email Address</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var driver in Drivers)
+            {
+            <tr>
+                <td>@driver.FirstName</td>
+                <td>@driver.LastName</td>
+                <td>@driver.DrivingLicense</td>
+                <td>@driver.ContactNumber</td>
+                <td>@driver.EmailAddress</td>
+                <td>
+                    <a href="/drivers/view/@driver.Id" class="btn btn-primary">
+                        <span class="oi oi-book"></span>
+                    </a>
+                    <a href="/drivers/edit/@driver.Id" class="btn btn-warning">
+                        <span class="oi oi-pencil"></span>
+                    </a>
+                    <button class="btn btn-danger" @onclick="@(()=>Delete(driver.Id))">
+                        <span class="oi oi-delete"></span>
+                    </button>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Driver> Drivers;
+    protected async override Task OnInitializedAsync()
+    {
+        Drivers = await _client.GetFromJsonAsync<List<Driver>>($"{Endpoints.DriversEndpoint}");
+    }
+    async Task Delete(int driverId)
+    {
+        var driver = Drivers.First(q => q.Id == driverId);
+        var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {driver.DrivingLicense}?");
+        if (confirm)
+        {
+            await _client.DeleteAsync($"{Endpoints.DriversEndpoint}/{driverId}");
+            await OnInitializedAsync();
+        }
+    }
+}

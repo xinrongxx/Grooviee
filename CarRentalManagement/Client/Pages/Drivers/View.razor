@@ -1,0 +1,13 @@
+﻿@page "/drivers/view/{id:int}"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+<h3>View</h3>
+<FormComponent driver="driver" Disabled="true" />
+@code {
+    [Parameter] public int id { get; set; }
+    Driver driver = new Driver();
+    protected async override Task OnParametersSetAsync()
+    {
+        driver = await _client.GetFromJsonAsync<Driver>($"{Endpoints.DriversEndpoint}/{id}");
+    }
+}
